@@ -1,8 +1,12 @@
 const express = require('express');
 const socketio = require('socket.io');
+ 
 
 //Databse connection
-const mongoose = require('mongoose');
+const mongoose = require('./config/db'); //sucessfully
+
+
+
 
 
 const app = express();
@@ -13,6 +17,8 @@ const server = app.listen(SERVER_PORT, () => {
     console.log(`Chat server is running on http:localhost:${SERVER_PORT}/`);
 })
 
+
+//routes
 app.get("/", (req, res) => {
     res.sendFile(__dirname + '/views/chat.html')
 })
@@ -22,7 +28,3 @@ app.get("/chatrooms", (req, res) => {
 })
 
 const io = socketio(server);
-
-io.on('connection', (socket) => {
-    
-})

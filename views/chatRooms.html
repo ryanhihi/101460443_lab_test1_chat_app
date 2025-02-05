@@ -5,80 +5,116 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat Rooms</title>
     <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+        }
+        #container {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+            margin-top: 10px;
+        }
+        input[type="text"] {
+            width: 300px;
+            padding: 5px;
+            margin-right: 5px;
+        }
+        button {
+            padding: 5px 10px;
+        }
+        .room-list {
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 <body>
-
-    <script>
-        const ioClient = io()
-
-        ioClient.on('connect', () => {
-            document.getElementById('socketID').innerHTML = ioClient.id;
-
-        })
-
-        //Function to join chat room
-        function joinRoom() {
-            const roomRadio = document.querySelector('input[name="room"]:checked');
-            const roomName = roomRadio.value
-            ioClient.emit('join_room', roomName)
-
-        }
-
-
-        //function to leave chat room
-        function leaveRoom() {
-            const roomRadio = document.querySelector('input[name="room"]:checked');
-            const roomName = roomRadio.value
-            ioClient.emit('leave_room', roomName)
-
-        }
-
-        //Room-based chat
-        function sendMessageRoom() {
-            const txtmessage = document.getElementById('message');
-            const message = txtmessage.value
-            const data = {
-                room: document.querySelector('input[name="room"]:checked').value,
-                message
-            }
-            ioClient.emit('room_message', data)
-
-
-        }
-        //Show chat history
-
-        ioClient.on('room_message', (data) => {
-            const container = document.getElementById('container');
-
-            const senderId = data.senderId
-            const message = data.message
-
-            const msg = `<p>${senderId}: ${message} </p>`;
-
-            container.innerHTML += msg
-
-        })
-
-    </script>
+    <h1>Rooms Available to Chat</h1>
+    <h4>Socket ID: <span id="socketID"></span></h4>
     
-    <h1>Rooms Available to chat</h1>
-    <h4 id="socketId"></h4>
-    <input type="radio" id="room1" name="room" value="fullstack"/>Full Stack Development <br/>
-    <input type="radio" id="room2" name="room" value="machinelearn"/>Machine Learning <br/>
-    <input type="radio" id="room3" name="room" value="cybersecurity"/>Cyber Security <br/>
-    <input type="radio" id="room4" name="room" value="mobile"/>Mobile App Development <br/>
-
-    <button onclick="joinRoom()">Join Chat Room</button>
-    <br/>
-    <input type="text" id="message" name="message" placeholder="Enter your message"/>
-    <button onclick="sendMessageRoom()" >Send Message to the Room</button>
-
-    <h3>Chat History</h3>
-    <div id="container" name="container">
-
+    <div class="room-list">
+        <input type="radio" id="room1" name="room" value="fullstack" checked />Full Stack Development <br/>
+        <input type="radio" id="room2" name="room" value="machinelearn" />Machine Learning <br/>
+        <input type="radio" id="room3" name="room" value="cybersecurity" />Cyber Security <br/>
+        <input type="radio" id="room4" name="room" value="mobile" />Mobile App Development <br/>
     </div>
 
+    <button onclick="joinRoom()">Join Chat Room</button>
     <button onclick="leaveRoom()">Leave Chat Room</button>
+    <br/><br/>
     
+    <input type="text" id="message" name="message" placeholder="Enter your message" />
+    <button onclick="sendMessageRoom()">Send Message to the Room</button>
+
+    <h3>Chat History</h3>
+    <div id="container"></div>
+
+    <script>
+        const ioClient = io();
+
+        // Display the Socket ID on connection
+        ioClient.on('connect', () => {
+            document.getElementById('socketID').textContent = ioClient.id;
+        });
+
+        // Function to join a chat room
+        function joinRoom() {
+            const roomRadio = document.querySelector('input[name="room"]:checked');
+            const roomName = roomRadio.value;
+            ioClient.emit('join_room', roomName);
+        }
+
+        // Function to leave a chat room
+        function leaveRoom() {
+            const roomRadio = document.querySelector('input[name="room"]:checked');
+            const roomName = roomRadio.value;
+            ioClient.emit('leave_room', roomName);
+        }
+
+        // Send a message to the selected chat room
+        function sendMessageRoom() {
+            const txtmessage = document.getElementById('message');
+            const message = txtmessage.value;
+            const roomName = document.querySelector('input[name="room"]:checked').value;
+
+            if (message.trim() === "") {
+                alert("Message cannot be empty.");
+                return;
+            }
+
+            const data = { room: roomName, message };
+            ioClient.emit('room_message', data);
+
+            // Clear the message input field
+            txtmessage.value = '';
+        }
+
+        // Listen for room-based messages and display them
+        ioClient.on('room_message', (data) => {
+            const container = document.getElementById('container');
+            const senderId = data.senderId;
+            const message = data.message;
+
+            const msg = `<p><strong>${senderId}:</strong> ${message}</p>`;
+            container.innerHTML += msg;
+
+            // Scroll to the latest message
+            container.scrollTop = container.scrollHeight;
+        });
+
+        // Show confirmation when joining a room
+        ioClient.on('joined_room', (roomName) => {
+            alert(`You have joined the room: ${roomName}`);
+        });
+
+        // Show confirmation when leaving a room
+        ioClient.on('left_room', (roomName) => {
+            alert(`You have left the room: ${roomName}`);
+        });
+    </script>
 </body>
 </html>

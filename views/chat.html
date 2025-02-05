@@ -5,30 +5,113 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat Page</title>
     <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        #container {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+        }
+        .message {
+            margin: 5px 0;
+        }
+        #typingIndicator {
+            font-style: italic;
+            color: grey;
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <h1>Chat Page</h1>
-    <script>
-        const ioClient = io()
-        ioClient.on('connect', () => {
-            cosnole.log('Connected to chat server')
-        })
+    <h2>Lab Test 1 - Full Stack Development</h2>
+    <h3>Ryan Tran</h3>
+    
+    <div>
+        <h3>Private Chat</h3>
+    <input type="text" id="message" name="message" placeholder="Enter your message here" />
+    <button onclick="sendMessage()">Send Message</button>
+    <span id="typingIndicator">Someone is typing...</span>
+    </div>
+    <div>
+        <h3>Join the following chat rooms</h3>
+    <a href="/chatrooms">Open Chat Rooms</a>
+    </div>
 
+
+    <h3>Chat History</h3>
+    <div id="container" name="container"></div>
+
+    <script>
+        const ioClient = io();
+
+        // Typing indicator
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        // Log connection
+        ioClient.on('connect', () => {
+            console.log('Connected to chat server');
+        });
+
+        // Listen for typing events
+        ioClient.on('typing', (data) => {
+            typingIndicator.style.display = 'inline'; // Show typing indicator
+        });
+
+        // Listen for stop typing events
+        ioClient.on('stop_typing', (data) => {
+            typingIndicator.style.display = 'none'; // Hide typing indicator
+        });
+
+        // Listen for chat messages
+        ioClient.on('chat_message', (data) => {
+            const container = document.getElementById('container');
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.innerHTML = `<strong>${data.datasent}:</strong> ${data.message}`;
+            container.appendChild(messageElement);
+            container.scrollTop = container.scrollHeight; // Auto-scroll to the latest message
+        });
+
+        // Send message to the server
         function sendMessage() {
             const txtmessage = document.getElementById('message');
-            const message = txtmessage.value
-            const data = {
-               message: txtmessage.value,
-               datasent: Date()
+            const message = txtmessage.value.trim();
+
+            if (message === '') {
+                alert('Please enter a message!');
+                return;
             }
-            ioClient.emit('room_message', data)
+
+            const data = {
+                message: message,
+                datasent: new Date().toLocaleString() // Add timestamp
+            };
+
+            ioClient.emit('message', data); // Send message to server
+            txtmessage.value = ''; // Clear input field
         }
+
+        // Listen for typing and stop typing events
+        const messageInput = document.getElementById('message');
+        let typingTimeout;
+
+        messageInput.addEventListener('input', () => {
+            if (!typingTimeout) {
+                ioClient.emit('typing', { userId: 'User1' }); // Send typing event
+            }
+
+            clearTimeout(typingTimeout);
+
+            typingTimeout = setTimeout(() => {
+                ioClient.emit('stop_typing', { userId: 'User1' }); // Send stop typing event
+            }, 1000); // Stop typing event after 1 second of inactivity
+        });
     </script>
-    <a href="/chatrooms">Open Chat Rooms</a>
-    <br>
-    <input type="text" id="message" name="message" placeholder="Enter your message here"/>
-    <button onclick="sendMessage()">Send Message</button>
-    <h3>Chat history</h3>
-    <div id="container" name="container"></div>
 </body>
 </html>
