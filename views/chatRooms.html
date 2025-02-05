@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Rooms</title>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+    <script>
+        const ioClient = io()
+
+        ioClient.on('connect', () => {
+            document.getElementById('socketID').innerHTML = ioClient.id;
+
+        })
+
+        //Function to join chat room
+        function joinRoom() {
+            const roomRadio = document.querySelector('input[name="room"]:checked');
+            const roomName = roomRadio.value
+            ioClient.emit('join_room', roomName)
+
+        }
+
+
+        //function to leave chat room
+        function leaveRoom() {
+            const roomRadio = document.querySelector('input[name="room"]:checked');
+            const roomName = roomRadio.value
+            ioClient.emit('leave_room', roomName)
+
+        }
+
+        //Room-based chat
+        function sendMessageRoom() {
+            const txtmessage = document.getElementById('message');
+            const message = txtmessage.value
+            const data = {
+                room: document.querySelector('input[name="room"]:checked').value,
+                message
+            }
+            ioClient.emit('room_message', data)
+
+
+        }
+        //Show chat history
+
+        ioClient.on('room_message', (data) => {
+            const container = document.getElementById('container');
+
+            const senderId = data.senderId
+            const message = data.message
+
+            const msg = `<p>${senderId}: ${message} </p>`;
+
+            container.innerHTML += msg
+
+        })
+
+    </script>
+    
+    <h1>Rooms Available to chat</h1>
+    <h4 id="socketId"></h4>
+    <input type="radio" id="room1" name="room" value="fullstack"/>Full Stack Development <br/>
+    <input type="radio" id="room2" name="room" value="machinelearn"/>Machine Learning <br/>
+    <input type="radio" id="room3" name="room" value="cybersecurity"/>Cyber Security <br/>
+    <input type="radio" id="room4" name="room" value="mobile"/>Mobile App Development <br/>
+
+    <button onclick="joinRoom()">Join Chat Room</button>
+    <br/>
+    <input type="text" id="message" name="message" placeholder="Enter your message"/>
+    <button onclick="sendMessageRoom()" >Send Message to the Room</button>
+
+    <h3>Chat History</h3>
+    <div id="container" name="container">
+
+    </div>
+
+    <button onclick="leaveRoom()">Leave Chat Room</button>
+    
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Page</title>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <h1>Chat Page</h1>
+    <script>
+        const ioClient = io()
+        ioClient.on('connect', () => {
+            cosnole.log('Connected to chat server')
+        })
+
+        function sendMessage() {
+            const txtmessage = document.getElementById('message');
+            const message = txtmessage.value
+            const data = {
+               message: txtmessage.value,
+               datasent: Date()
+            }
+            ioClient.emit('room_message', data)
+        }
+    </script>
+    <a href="/chatrooms">Open Chat Rooms</a>
+    <br>
+    <input type="text" id="message" name="message" placeholder="Enter your message here"/>
+    <button onclick="sendMessage()">Send Message</button>
+    <h3>Chat history</h3>
+    <div id="container" name="container"></div>
+</body>
+</html>
