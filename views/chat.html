@@ -40,34 +40,34 @@
     </div>
     <div>
         <h3>Join the following chat rooms</h3>
-    <a href="/chatrooms">Open Chat Rooms</a>
+    <a href="./chatRooms.html">Open Chat Rooms</a>
     </div>
-
-
-    <h3>Chat History</h3>
-    <div id="container" name="container"></div>
+    <div>
+    <button onclick="logout()">Logout</button>
+    </div>
+ 
 
     <script>
         const ioClient = io();
-
+    
         // Typing indicator
         const typingIndicator = document.getElementById('typingIndicator');
-
+    
         // Log connection
         ioClient.on('connect', () => {
             console.log('Connected to chat server');
         });
-
+    
         // Listen for typing events
         ioClient.on('typing', (data) => {
             typingIndicator.style.display = 'inline'; // Show typing indicator
         });
-
+    
         // Listen for stop typing events
         ioClient.on('stop_typing', (data) => {
             typingIndicator.style.display = 'none'; // Hide typing indicator
         });
-
+    
         // Listen for chat messages
         ioClient.on('chat_message', (data) => {
             const container = document.getElementById('container');
@@ -78,40 +78,80 @@
             container.scrollTop = container.scrollHeight; // Auto-scroll to the latest message
         });
 
+        //logout
+        function logout() {
+        // Disconnect the Socket.IO client
+        ioClient.disconnect();
+
+        // Clear the displayed Socket ID
+        document.getElementById('socketID').textContent = '';
+
+        
+        alert('You have been logged out.');
+        window.location.reload();  
+            }
+    
         // Send message to the server
         function sendMessage() {
             const txtmessage = document.getElementById('message');
             const message = txtmessage.value.trim();
-
+    
             if (message === '') {
                 alert('Please enter a message!');
                 return;
             }
-
+    
             const data = {
                 message: message,
                 datasent: new Date().toLocaleString() // Add timestamp
             };
-
+    
             ioClient.emit('message', data); // Send message to server
             txtmessage.value = ''; // Clear input field
         }
-
+    
         // Listen for typing and stop typing events
         const messageInput = document.getElementById('message');
         let typingTimeout;
-
+    
         messageInput.addEventListener('input', () => {
             if (!typingTimeout) {
                 ioClient.emit('typing', { userId: 'User1' }); // Send typing event
             }
-
+    
             clearTimeout(typingTimeout);
-
+    
             typingTimeout = setTimeout(() => {
                 ioClient.emit('stop_typing', { userId: 'User1' }); // Send stop typing event
             }, 1000); // Stop typing event after 1 second of inactivity
         });
+    
+        // Fetch and display chat history when the page loads
+        function loadChatHistory() {
+            fetch('/api/privateMessage/history')  // Ensure this route exists on the backend
+                .then(response => response.json())
+                .then(messages => {
+                    const container = document.getElementById('container');
+                    container.innerHTML = ''; // Clear existing messages
+    
+                    messages.forEach(message => {
+                        const messageElement = document.createElement('div');
+                        messageElement.classList.add('message');
+                        messageElement.innerHTML = `<strong>${message.from_user}:</strong> ${message.message} <em>${new Date(message.date_sent).toLocaleString()}</em>`;
+                        container.appendChild(messageElement);
+                    });
+    
+                    container.scrollTop = container.scrollHeight; // Scroll to the bottom after loading
+                })
+                .catch(error => console.error('Error loading chat history:', error));
+        }
+    
+        // Load chat history when the page is loaded
+        document.addEventListener('DOMContentLoaded', loadChatHistory);
+
+
     </script>
+    
+
 </body>
 </html>

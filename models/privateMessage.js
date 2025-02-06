@@ -19,5 +19,5 @@ const privateMessageSchema = new mongoose.Schema({
 
 });
 
-const user = mongoose.model("PrivateMessage", privateMessageSchema)
+const PrivateMessage = mongoose.model("PrivateMessage", privateMessageSchema)
 module.exports = privateMessageSchema;
